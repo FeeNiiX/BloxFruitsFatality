@@ -158,7 +158,7 @@ end)
 
 -- Tween To NPCs Dropdown
 --------------------------------------------------
-LeftGroupBox:AddDropdown('NPCsDropdown', { Values = GetNPCs(), Default = 'Butler', Multi = false, Text = 'NPCs', Callback = function(Value) end})
+LeftGroupBox:AddDropdown('NPCsDropdown', { Values = GetNPCs(), Default = 'Barista Cousin', Multi = false, Text = 'NPCs', Callback = function(Value) end})
 Options.NPCsDropdown:OnChanged(function() TweenNPC = Options.NPCsDropdown.Value end)
 --------------------------------------------------
 
