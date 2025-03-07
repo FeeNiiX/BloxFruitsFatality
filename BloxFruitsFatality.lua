@@ -1,6 +1,6 @@
 local Repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
 
-local Library = loadstring(readfile('Library.lua'))()
+local Library = loadstring(game:HttpGet(Repo .. 'Library.lua'))()
 local ThemeManager = loadstring(game:HttpGet(Repo .. 'addons/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet(Repo .. 'addons/SaveManager.lua'))()
 
