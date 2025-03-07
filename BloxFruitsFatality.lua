@@ -1,6 +1,6 @@
 local Repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
 
-local Library = loadstring(game:HttpGet(Repo .. 'Library.lua'))()
+local Library = loadstring(readfile('Library.lua'))()
 local ThemeManager = loadstring(game:HttpGet(Repo .. 'addons/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet(Repo .. 'addons/SaveManager.lua'))()
 
@@ -47,10 +47,8 @@ end
 function GetChests()
     for _,v in pairs(workspace:GetDescendants()) do
         if v.Name:find('Chest') and v:IsA('Model') and v:FindFirstChild('PrimaryPart') then
-            print('[First] Found chest:', v)
             Chests = v.PrimaryPart.CFrame.Position
         elseif v.Name:find('Chest') and v:IsA('Part') and v.CanTouch then
-            print('[Second] Found chest:', v)
             Chests = v.CFrame.Position
         end
     end
@@ -203,8 +201,6 @@ Options.TweenOffsetZ:OnChanged(function() TweenOffsetZ = Options.TweenOffsetZ.Va
 --------------------------------------------------
 local LeftGroupBox2 = Tabs.Main:AddLeftGroupbox('Auto Collect')
 
--- Make this run every second or smth do something baka
-
 LeftGroupBox2:AddToggle('AutoCollectChests', {Text = 'Auto Collect Chests', Default = false, Callback = function(Value) end})
 
 Toggles.AutoCollectChests:OnChanged(function()
@@ -222,7 +218,6 @@ Toggles.AutoCollectFruit:OnChanged(function()
     end
 end)
 --------------------------------------------------
-
 
 -- Local Player GroupBox
 --------------------------------------------------
