@@ -9,11 +9,23 @@ local TweenService = game:GetService('TweenService')
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 local TeleportService = game:GetService('TeleportService')
 
+-- TODO --
+-- Remove weather/fog
+-- Add Fast attack
+-- Add Hitbox Expander
+-- Literally make an auto farm because thats the whole point of a blox fruits script? 😭😭😭😭😭😭
+-- Smart Teleport from hoho hub?
+
 -- Functions
 
 function GetNPCs()
     local NPCs = {}
     for _,v in pairs(ReplicatedStorage.NPCs:GetChildren()) do
+        if v:IsA('Model') then
+            table.insert(NPCs, v.Name)
+        end
+    end
+    for _,v in pairs(workspace.NPCs:GetChildren()) do
         if v:IsA('Model') then
             table.insert(NPCs, v.Name)
         end
@@ -36,7 +48,7 @@ function GetFruits()
         if v.Name:find("Fruit") then
             for _, v in pairs(v:GetChildren()) do
                 if v.Name:find('Fruit') and v:IsA('Model') then
-                    Fruits = v.PrimaryPart.CFrame.Position
+                    Fruits = v.PrimaryPart.CFrame
                 end
             end
         end
@@ -49,42 +61,36 @@ function GetChests()
         if v.Name:find('Chest') and v:IsA('Model') and v:FindFirstChild('PrimaryPart') then
             Chests = v.PrimaryPart.CFrame.Position
         elseif v.Name:find('Chest') and v:IsA('Part') and v.CanTouch then
-            Chests = v.CFrame.Position
+            Chests = v.CFrame
         end
     end
     return Chests
 end
 
-function TweenToPosition(TargetPosition)
-    local HumanoidRootPart = Players.LocalPlayer.Character:FindFirstChild('HumanoidRootPart')
-    local lplr = Players.LocalPlayer
-
-    if HumanoidRootPart and TargetPosition then
-        if TargetPosition == TweenPlayer then
-            TargetPosition = Players:FindFirstChild(TweenPlayer).PrimaryPart.Position
-        elseif TargetPosition == TweenNPC then
-            TargetPosition = ReplicatedStorage.NPCs:FindFirstChild(TweenNPC).PrimaryPart.CFrame.Position
-        elseif TargetPosition == TweenIsland then
-            TargetPosition = workspace.Map:FindFirstChild(TweenIsland).WorldPivot.Position
-        elseif TargetPosition == Fruits then
-            TargetPosition = Fruits.PrimaryPart.Position
-        elseif TargetPosition == Chests then
-            TargetPosition = Chests
-        end
-
-        local Offset = Vector3.new(TweenOffsetX, TweenOffsetY, TweenOffsetZ)
-        local Tween
-        if TargetPosition == TweenPlayer then
-            Tween = TweenService:Create(HumanoidRootPart, TweenInfo.new((lplr:DistanceFromCharacter(TargetPosition)-150)/TweenSpeed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(TargetPosition) + Offset})
-        elseif TargetPosition == TweenNPC or TargetPosition == Fruits or TargetPosition == Chests then
-            Tween = TweenService:Create(HumanoidRootPart, TweenInfo.new((lplr:DistanceFromCharacter(TargetPosition)-150)/TweenSpeed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(TargetPosition)})
+function TweenToPosition(Target)
+    local plr = Players.LocalPlayer
+    local t = game.TweenService
+    local chr = plr.Character
+    
+    if chr.HumanoidRootPart and Target then
+        if Target == TweenPlayer then
+            Target = workspace.Characters:FindFirstChild(TweenPlayer).PrimaryPart.CFrame
+        elseif Target == TweenNPC then
+            tOffsetX, tOffsetY, tOffsetZ = 0, 0, 0
+            if ReplicatedStorage.NPCs:FindFirstChild(TweenNPC) then
+                Target = ReplicatedStorage.NPCs:FindFirstChild(TweenNPC).PrimaryPart.CFrame
+            else
+                Target = workspace.NPCs:FindFirstChild(TweenNPC).PrimaryPart.CFrame
+            end
+        elseif Target == TweenIsland then
+            tOffsetX, tOffsetY, tOffsetZ = 0, 100, 100
+            Target = workspace.Map:FindFirstChild(TweenIsland).WorldPivot
         else
-            Tween = TweenService:Create(HumanoidRootPart, TweenInfo.new((lplr:DistanceFromCharacter(TargetPosition)-150)/TweenSpeed, Enum.EasingStyle.Linear), {CFrame = CFrame.new(TargetPosition) + Vector3.new(50, 100, 50)})
+            tOffsetX, tOffsetY, tOffsetZ = 0, 0, 0
+            Target = Target
         end
-
-        Tween:Play()
-        Tween.Completed:Wait()
-        HumanoidRootPart.CFrame = CFrame.new(TargetPosition)
+        
+        t:Create(chr.HumanoidRootPart, TweenInfo.new((plr:DistanceFromCharacter(Target.Position)-200)/TweenSpeed, Enum.EasingStyle.Linear), {CFrame = Target + Vector3.new(tOffsetX, tOffsetY, tOffsetZ)}):Play()
     end
 end
 
@@ -122,10 +128,10 @@ local Tabs = {
 
 local MenuGroup = Tabs.Config:AddLeftGroupbox('Menu')
 MenuGroup:AddButton('Unload', function() 
-    if workspace:FindFirstChild('part') then
+    if workspace:FindFirstChild('Part') then
         workspace.Part:Destroy()
     end
-    Library:Unload() 
+    Library:Unload()
 end)
 
 -- Left Group Box Tweening
@@ -144,7 +150,7 @@ LeftGroupBox:AddToggle('TweenToPlayersToggle', { Text = 'Tween To Players', Defa
 
 Toggles.TweenToPlayersToggle:OnChanged(function()
     while Toggles.TweenToPlayersToggle.Value do
-        game:GetService('RunService').Heartbeat:Wait()
+        task.wait(0.016)
         TweenToPosition(TweenPlayer)
     end
 end)
@@ -152,50 +158,54 @@ end)
 
 -- Tween To NPCs Dropdown
 --------------------------------------------------
-LeftGroupBox:AddDropdown('NPCsDropdown', { Values = GetNPCs(), Default = 'Barista Cousin', Multi = false, Text = 'NPCs', Callback = function(Value) end})
+LeftGroupBox:AddDropdown('NPCsDropdown', { Values = GetNPCs(), Default = 'Butler', Multi = false, Text = 'NPCs', Callback = function(Value) end})
 Options.NPCsDropdown:OnChanged(function() TweenNPC = Options.NPCsDropdown.Value end)
 --------------------------------------------------
 
--- Tween To NPCs Button
+-- Tween To NPCs Toggle
 --------------------------------------------------
-LeftGroupBox:AddButton({ Text = 'Tween To NPC', Func = function() TweenToPosition(TweenNPC) end})
---------------------------------------------------
+LeftGroupBox:AddToggle('TweenToNPCToggle', { Text = 'Tween To NPC', Default = false, Callback = function(Value) end})
 
--- Refresh NPCs Button (Also unknown if this works)
---------------------------------------------------
-LeftGroupBox:AddButton({ Text = 'Refresh NPCs', Func = function() Options.NPCsDropdown.Values = GetNPCs() end})
+Toggles.TweenToNPCToggle:OnChanged(function()
+    while Toggles.TweenToNPCToggle.Value do
+        task.wait(0.016)
+        TweenToPosition(TweenNPC)
+    end
+end)
 --------------------------------------------------
 
 -- Tween To Island Dropdown
 --------------------------------------------------
-LeftGroupBox:AddDropdown('IslandsDropdown', { Values = GetIslands(), Default = 0, Multi = false, Text = 'Islands', Callback = function(Value) end})
+LeftGroupBox:AddDropdown('IslandsDropdown', { Values = GetIslands(), Default = 'Boat Castle', Multi = false, Text = 'Islands', Callback = function(Value) end})
 Options.IslandsDropdown:OnChanged(function() TweenIsland = Options.IslandsDropdown.Value end)
 --------------------------------------------------
 
--- Tween To Island Button
+-- Tween To Island Toogle
 --------------------------------------------------
-LeftGroupBox:AddButton({ Text = 'Tween To Island', Func = function() TweenToPosition(TweenIsland) end})
---------------------------------------------------
+LeftGroupBox:AddToggle('TweenToIslandToggle', { Text = 'Tween To Island', Default = false, Callback = function(Value) end})
 
--- Refresh Islands Button (does this really works? we shall never know)
---------------------------------------------------
-LeftGroupBox:AddButton({ Text = 'Refresh Islands', Func = function() Options.IslandsDropdown.Values = GetIslands() end})
+Toggles.TweenToIslandToggle:OnChanged(function()
+    while Toggles.TweenToIslandToggle.Value do
+        task.wait(0.016)
+        TweenToPosition(TweenIsland)
+    end
+end)
 --------------------------------------------------
 
 -- Tween Speed Slider
 --------------------------------------------------
 
-LeftGroupBox:AddSlider('TweenSpeed', {Text = 'Tween Speed', Default = 320, Min = 0, Max = 320, Rounding = 0, Compact = false,Callback = function(Value) end})
+LeftGroupBox:AddSlider('TweenSpeed', {Text = 'Tween Speed', Default = 300, Min = 0, Max = 400, Rounding = 0, Compact = false,Callback = function(Value) end})
 Options.TweenSpeed:OnChanged(function() TweenSpeed = Options.TweenSpeed.Value end)
 
-LeftGroupBox:AddSlider('TweenOffsetX', {Text = 'Offset X', Default = 0, Min = 0, Max = 200, Rounding = 0, Compact = false, Callback = function(Value) end})
-Options.TweenOffsetX:OnChanged(function() TweenOffsetX = Options.TweenOffsetX.Value end)
+LeftGroupBox:AddSlider('tOffsetX', {Text = 'Offset X', Default = 0, Min = 0, Max = 200, Rounding = 0, Compact = false, Callback = function(Value) end})
+Options.tOffsetX:OnChanged(function() tOffsetX = Options.tOffsetX.Value end)
 
-LeftGroupBox:AddSlider('TweenOffsetY', {Text = 'Offset Y', Default = 20, Min = 0, Max = 200, Rounding = 0, Compact = false, Callback = function(Value) end})
-Options.TweenOffsetY:OnChanged(function() TweenOffsetY = Options.TweenOffsetY.Value end)
+LeftGroupBox:AddSlider('tOffsetY', {Text = 'Offset Y', Default = 20, Min = 0, Max = 200, Rounding = 0, Compact = false, Callback = function(Value) end})
+Options.tOffsetY:OnChanged(function() tOffsetY = Options.tOffsetY.Value end)
 
-LeftGroupBox:AddSlider('TweenOffsetZ', {Text = 'Offset Z', Default = 0, Min = 0, Max = 200, Rounding = 0, Compact = false,Callback = function(Value) end})
-Options.TweenOffsetZ:OnChanged(function() TweenOffsetZ = Options.TweenOffsetZ.Value end)
+LeftGroupBox:AddSlider('tOffsetZ', {Text = 'Offset Z', Default = 0, Min = 0, Max = 200, Rounding = 0, Compact = false,Callback = function(Value) end})
+Options.tOffsetZ:OnChanged(function() tOffsetZ = Options.tOffsetZ.Value end)
 
 -- Auto Collect Group Box
 --------------------------------------------------
@@ -227,16 +237,19 @@ local WalkSpeed = Players.LocalPlayer.Character:FindFirstChild('Humanoid').WalkS
 local JumpPower = Players.LocalPlayer.Character:FindFirstChild('Humanoid').JumpPower
 local CameraMaxZoom = Players.LocalPlayer.CameraMaxZoomDistance
 
-local InitialCameraMaxZoom = CameraMaxZoom
-
 RightGroupbox:AddSlider('Walkspeed', {Text = 'Walkspeed', Default = WalkSpeed, Min = 0, Max = 200, Rounding = 0, Compact = false, Callback = function(Value) end})
 Options.Walkspeed:OnChanged(function()
-    local WalkSpeed = Options.Walkspeed.Value
+    Players.LocalPlayer.Character.Humanoid.WalkSpeed = Options.Walkspeed.Value
 end)
 
 RightGroupbox:AddSlider('JumpPower', {Text = 'Jump Power', Default = JumpPower, Min = 0, Max = 200, Rounding = 0, Compact = false, Callback = function(Value) end})
 Options.JumpPower:OnChanged(function()
-    JumpPower = Options.JumpPower.Value
+    Players.LocalPlayer.Character.Humanoid.JumpPower = Options.JumpPower.Value
+end)
+
+game:GetService('RunService').RenderStepped:Connect(function()
+    Players.LocalPlayer.Character.Humanoid.WalkSpeed = Options.Walkspeed.Value
+    Players.LocalPlayer.Character.Humanoid.JumpPower = Options.JumpPower.Value
 end)
 
 RightGroupbox:AddToggle('NoclipCam', {Text = 'Noclip Camera', Default = true, Callback = function(Value) end})
@@ -253,10 +266,11 @@ RightGroupbox:AddToggle('UnlimitedZoom', {Text = 'Unlimited Zoom', Default = tru
 
 Toggles.UnlimitedZoom:OnChanged(function()
     if Toggles.UnlimitedZoom.Value then
-        CameraMaxZoom = CameraMaxZoom * 10
+        Players.LocalPlayer.CameraMaxZoomDistance = CameraMaxZoom * 20
     else
-        CameraMaxZoom = InitialCameraMaxZoom
+        Players.LocalPlayer.CameraMaxZoomDistance = CameraMaxZoom
     end
+    -- 😰
 end)
 
 RightGroupbox:AddToggle('WalkOnWater', { Text = 'Walk on Water', Default = true, Callback = function(Value) end})
@@ -271,6 +285,7 @@ end)
 
 
 RightGroupbox:AddButton({ Text = 'Server Hop', Func = function()
+    -- infinite yield server hop ofc
     local PlaceId = game.PlaceId
     local JobId = game.JobId
     local HttpService = game:GetService('HttpService')
@@ -298,6 +313,7 @@ RightGroupbox:AddButton({ Text = 'Server Hop', Func = function()
 end})
 
 RightGroupbox:AddButton({ Text = 'Rejoin', Func = function()
+    -- infinite yield rejoin ofc
     local PlaceId = game.PlaceId
     local JobId = game.JobId
     
@@ -378,8 +394,8 @@ SaveManager:IgnoreThemeSettings()
 
 SaveManager:SetIgnoreIndexes({ 'MenuKeybind' })
 
-ThemeManager:SetFolder('MyScriptHub')
-SaveManager:SetFolder('MyScriptHub/specific-game')
+ThemeManager:SetFolder('FatalityWin')
+SaveManager:SetFolder('FatalityWin/BloxFruits')
 
 SaveManager:BuildConfigSection(Tabs['Config'])
 
